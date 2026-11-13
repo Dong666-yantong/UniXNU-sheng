@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: UniXNU/UniXNU
-          ref: 82b847c4ac3f68a57024b3082ffa3a03442defd9 # Wi-Fi runtime and Data firmware integration
+          ref: e7c359cd27c78e2a8893d649c6c9104acd2f97c0 # build the GPU plugin for macOS 27 (fixes mesa turnip-frame-diagnostics new-file-mode)
           path: UniXNU
           submodules: recursive
       - uses: actions/checkout@v4
@@ -121,6 +121,36 @@ jobs:
               path.write_bytes(data)
           if not path.is_file() and os.environ['INIT_DATA'] != 'true':
               raise SystemExit('No saved seed. Supply the ORIGINAL seed for an existing installation, or select init_data for a FIRST installation')
+          PY
+      - name: wifi firmware
+        working-directory: device
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, urllib.request
+          commit = 'ebdd6f89ee5aaa132f03860c211bdfb4294bd954'
+          bases = [
+              'https://cdn.jsdelivr.net/gh/ianchb/sheng-firmware@%s/ath12k/WCN7850/hw2.0/' % commit,
+              'https://raw.githubusercontent.com/ianchb/sheng-firmware/%s/ath12k/WCN7850/hw2.0/' % commit,
+          ]
+          pins = {n: (v['bytes'], v['sha256']) for n, v in json.loads(pathlib.Path('firmware/wcn7850/manifest.json').read_text())['files'].items()}
+          out = pathlib.Path('firmware/wcn7850')
+          for name, (size, digest) in pins.items():
+              data = None
+              for base in bases:
+                  try:
+                      with urllib.request.urlopen(base + name, timeout=180) as source:
+                          blob = source.read(size + 1)
+                  except Exception as error:
+                      print(name, base.split('/')[2], type(error).__name__)
+                      continue
+                  if len(blob) == size and hashlib.sha256(blob).hexdigest() == digest:
+                      data = blob
+                      break
+                  print(name, base.split('/')[2], 'differs', len(blob))
+              if data is None:
+                  raise SystemExit('WCN7850 firmware differs from manifest: ' + name)
+              (out / name).write_bytes(data)
+              print(name, size, 'ok')
           PY
       - name: package
         working-directory: device
