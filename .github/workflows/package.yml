@@ -152,6 +152,27 @@ jobs:
               (out / name).write_bytes(data)
               print(name, size, 'ok')
           PY
+      - name: wifi sources
+        working-directory: device
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("drivers/Ath12kWifi/tools/fetch-sources.py")
+          text = path.read_text()
+          old = 'sparse-checkout", "add", *source["paths"]'
+          new = 'sparse-checkout", "set", "--no-cone", *paths'
+          if text.count(old) != 1:
+              raise SystemExit("fetch-sources.py sparse-checkout call changed")
+          path.write_text(text.replace(old, new, 1))
+          print("patched fetch-sources.py sparse-checkout")
+          PY
+          for attempt in 1 2 3; do
+            if python3 drivers/Ath12kWifi/tools/fetch-sources.py; then exit 0; fi
+            echo "fetch attempt $attempt failed"
+            rm -rf drivers/Ath12kWifi/deps
+            sleep 10
+          done
+          exit 1
       - name: package
         working-directory: device
         env:
