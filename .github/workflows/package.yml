@@ -188,6 +188,7 @@ jobs:
           python3 scripts/download-sheng-firmware.py
           python3 scripts/extract-sheng-firmware.py --delete-archive
           python3 scripts/import-sheng-uefi.py
+          python3 scripts/extract-files.py
           python3 scripts/check-sheng.py
       - name: package
         working-directory: device
