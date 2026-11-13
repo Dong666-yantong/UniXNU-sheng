@@ -173,6 +173,22 @@ jobs:
             sleep 10
           done
           exit 1
+      - name: firmware inputs
+        working-directory: UniXNU
+        env:
+          UNIXNU_DEVICE: ${{ github.workspace }}/device
+          UNIXNU_UEFI: ${{ github.workspace }}/uefi-sheng
+        run: |
+          set -eux
+          ./unixnu defconfig sheng_ipados27_defconfig --os 27 -D "$UNIXNU_DEVICE"
+          ./unixnu tree --os 27 -D "$UNIXNU_DEVICE" --uefi "$UNIXNU_UEFI"
+          TREE=out/sheng/ipados-27.0.1-24A446/sheng_ipados27/tree
+          cd "$TREE"
+          python3 scripts/fetch-sheng-dts.py
+          python3 scripts/download-sheng-firmware.py
+          python3 scripts/extract-sheng-firmware.py --delete-archive
+          python3 scripts/import-sheng-uefi.py
+          python3 scripts/check-sheng.py
       - name: package
         working-directory: device
         env:
