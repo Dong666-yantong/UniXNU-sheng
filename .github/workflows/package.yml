@@ -135,7 +135,22 @@ jobs:
           PY
       - name: fetch Wi-Fi build sources
         working-directory: device
-        run: python3 drivers/Ath12kWifi/tools/fetch-sources.py
+        run: |
+          python3 - <<'PY'
+          import json, shutil, subprocess
+          from pathlib import Path
+          root = Path('drivers/Ath12kWifi')
+          lock = json.loads((root / 'tools/source-lock.json').read_text())
+          for name in ('linux', 'freebsd'):
+              source = lock[name]
+              checkout = root / 'deps' / name
+              if checkout.exists():
+                  shutil.rmtree(checkout)
+              subprocess.run(['git', 'clone', '--filter=blob:none', '--no-checkout', source['url'], str(checkout)], check=True)
+              subprocess.run(['git', '-C', str(checkout), 'fetch', '--depth', '1', 'origin', source['commit']], check=True)
+              subprocess.run(['git', '-C', str(checkout), 'checkout', source['commit']], check=True)
+          PY
+          python3 drivers/Ath12kWifi/tools/fetch-sources.py
 
       - name: package
         working-directory: device
