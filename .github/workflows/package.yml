@@ -51,6 +51,17 @@ jobs:
           repository: UniXNU/uefi-sheng
           path: uefi-sheng
           submodules: recursive
+      - name: fix upstream patch metadata
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('UniXNU/patches/mesa/turnip-frame-diagnostics.patch')
+          text = path.read_text()
+          marker = 'diff --git a/src/freedreno/vulkan/tu_frame_diagnostic.h b/src/freedreno/vulkan/tu_frame_diagnostic.h\n'
+          if marker in text and 'new file mode 100644\n' not in text[text.index(marker):text.index(marker) + 160]:
+              text = text.replace(marker, marker + 'new file mode 100644\n', 1)
+              path.write_text(text)
+          PY
       - name: tools
         run: |
           brew install dtc llvm lld cmake mtools ninja glslang shaderc spirv-tools bison pkgconf rustup blacktop/tap/ipsw
