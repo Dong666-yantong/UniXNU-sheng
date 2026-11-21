@@ -146,9 +146,11 @@ jobs:
               checkout = root / 'deps' / name
               if checkout.exists():
                   shutil.rmtree(checkout)
-              subprocess.run(['git', 'clone', '--filter=blob:none', '--sparse', '--no-checkout', source['url'], str(checkout)], check=True)
-              subprocess.run(['git', '-C', str(checkout), 'fetch', '--depth', '1', 'origin', source['commit']], check=True)
-              subprocess.run(['git', '-C', str(checkout), 'checkout', source['commit']], check=True)
+              checkout.mkdir(parents=True)
+              subprocess.run(['git', '-C', str(checkout), 'init'], check=True, stdout=subprocess.DEVNULL)
+              subprocess.run(['git', '-C', str(checkout), 'remote', 'add', 'origin', source['url']], check=True)
+              subprocess.run(['git', '-C', str(checkout), '-c', 'protocol.version=2', 'fetch', '--filter=blob:none', '--depth', '1', 'origin', source['commit']], check=True)
+              subprocess.run(['git', '-C', str(checkout), 'checkout', '--detach', 'FETCH_HEAD'], check=True)
               subprocess.run(['git', '-C', str(checkout), 'sparse-checkout', 'set', '--skip-checks', *source['paths']], check=True)
           PY
           python3 drivers/Ath12kWifi/tools/fetch-sources.py
