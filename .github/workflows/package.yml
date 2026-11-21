@@ -145,7 +145,17 @@ jobs:
           if [ "$OS_PROFILE" = 27 ] && [ "$INIT_DATA" = true ]; then
             args+=(--init-data)
           fi
-          scripts/package.sh "${args[@]}"
+          set -o pipefail
+          scripts/package.sh "${args[@]}" 2>&1 | tee "$GITHUB_WORKSPACE/package.log"
+
+      - name: package failure log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-failure-log
+          retention-days: 1
+          if-no-files-found: warn
+          path: package.log
       - uses: actions/cache/save@v4
         if: always() && inputs.os == '27' && steps.data-cache.outputs.cache-hit != 'true' && hashFiles('UniXNU/out/sheng/ipados-27.0.1-24A446/sheng_ipados27/runtime/data.dbr') != ''
         with:
