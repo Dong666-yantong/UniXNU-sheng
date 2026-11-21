@@ -1,0 +1,39 @@
+diff --git a/scripts/build-sheng-source-drivers.py b/scripts/build-sheng-source-drivers.py
+index 8cf0484..f0cb6f8 100644
+--- a/scripts/build-sheng-source-drivers.py
++++ b/scripts/build-sheng-source-drivers.py
+@@ -79,7 +79,8 @@ def main():
+     tree, device = args.tree.resolve(), args.device.resolve()
+     if args.profile is None:
+         board = tomllib.loads((device / 'board.toml').read_text())
+-        args.profile = ROOT / 'profiles/os' / board['board']['os_profile'] / 'profile.toml'
++        core = (device / board['package']['unixnu']).resolve()
++        args.profile = Path(os.environ['UNIXNU_OS_PROFILE']) if os.environ.get('UNIXNU_OS_PROFILE') else core / 'profiles/os' / board['board']['os_profile'] / 'profile.toml'
+     profile = tomllib.loads(args.profile.read_text())
+     pins = {entry['name']: entry for entry in profile.get('source', [])}
+     for family in ('IOStorageFamily', 'IOHIDFamily'):
+diff --git a/scripts/unixnu/cli.py b/scripts/unixnu/cli.py
+index 5bdec3c..f69db74 100644
+--- a/scripts/unixnu/cli.py
++++ b/scripts/unixnu/cli.py
+@@ -99,7 +99,7 @@ def need_uefi(ctx):
+     return uefi
+ 
+ 
+-REFERENCES = {'kernel': ('xnu', 'libplatform', 'libdispatch', 'AvailabilityVersions', 'libpthread', 'corecrypto-2023', 'IOStorageFamily'), 'package': ('edk2',), 'firmware': ('edk2',)}
++REFERENCES = {'kernel': ('xnu', 'libplatform', 'libdispatch', 'AvailabilityVersions', 'libpthread', 'corecrypto-2023', 'IOStorageFamily', 'IOHIDFamily'), 'package': ('edk2',), 'firmware': ('edk2',)}
+ 
+ 
+ def prepare(ctx, steps=()):
+diff --git a/scripts/unixnu/kernel.py b/scripts/unixnu/kernel.py
+index 32f3191..f50bf9f 100644
+--- a/scripts/unixnu/kernel.py
++++ b/scripts/unixnu/kernel.py
+@@ -43,6 +43,7 @@ def version_env(modules, ctx=None):
+             env[variable] = xnu[key]
+     if ctx and ctx.schema_version == 2:
+         profile = ctx.board.get('os', {})
++        env['UNIXNU_OS_PROFILE'] = str(ctx.profile_roots['os'] / 'profile.toml')
+         for key, variable in (('xnu_revision', 'UNIXNU_XNU_COMMIT'), ('xnu_version', 'UNIXNU_XNU_VERSION'),
+                               ('darwin', 'UNIXNU_XNU_DARWIN'), ('driverkit_tag', 'UNIXNU_DRIVERKIT_TAG'),
+                               ('trustcache_tag', 'UNIXNU_TRUSTCACHE_TAG')):

@@ -51,6 +51,9 @@ jobs:
           repository: UniXNU/uefi-sheng
           path: uefi-sheng
           submodules: recursive
+      - name: backport source driver profile selection
+        # UniXNU/UniXNU@66535d1fd3ef154c619e073faa7e1b2c72d7231a
+        run: git -C UniXNU apply "$GITHUB_WORKSPACE/device/.github/patches/unixnu-source-driver-profile.patch"
       - name: fix upstream patch metadata
         run: |
           python3 - <<'PY'
