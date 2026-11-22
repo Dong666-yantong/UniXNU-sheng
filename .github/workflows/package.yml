@@ -158,6 +158,10 @@ jobs:
           PY
           python3 drivers/Ath12kWifi/tools/fetch-sources.py
 
+      - name: extract pinned device firmware
+        working-directory: device
+        run: python3 scripts/extract-files.py
+
       - name: package
         working-directory: device
         env:

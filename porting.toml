@@ -155,6 +155,11 @@ result = "Implementation and configuration described in this section"
 
 [[area.evidence]]
 kind = "source"
+reference = ".github/workflows/package.yml"
+result = "The package workflow extracts all SHA-256-pinned device firmware before packaging, including Touch, Keyboard and Video inputs."
+
+[[area.evidence]]
+kind = "source"
 reference = "https://github.com/rponeawa/UniXNU/blob/9113590/package/UniXNUPkg/Driver/UniXNURamDiskDxe/UniXNURamDiskDxe.c"
 result = "Shared FDT initrd block-device publication; board memory policy remains in uefi-sheng."
 
